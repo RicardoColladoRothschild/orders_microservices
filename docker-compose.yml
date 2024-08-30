@@ -1,0 +1,76 @@
+version: '3.8'
+
+services:
+  postgres:
+    container_name: postgres
+    image: postgres:13
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin12344
+      POSTGRES_DB: ordersdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./services/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - backend-network
+
+  pgadmin-message-version:
+    container_name: pgadmin-message-version
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin1234
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+    networks:
+      - backend-network
+
+  query-service-producer:
+    container_name: query-service-producer
+    build:
+      context: ./services/queryServiceProducer
+    command: sh -c "npx nodemon --watch ./src --exec ts-node ./src/producer.ts"
+    environment:
+      DATABASE_URL: postgres://user:password@postgres:5432/ordersdb
+      AMQP_URL: amqp://rabbitmq
+    depends_on:
+      - postgres
+      - rabbitmq
+    volumes:
+      - ./services/queryServiceProducer:/app
+    ports:
+      - "3001:3001"
+    networks:
+      - backend-network
+
+  consumer:
+    container_name: consumer
+    build:
+      context: ./services/consumer
+    command: sh -c "npx nodemon --watch ./src --exec ts-node ./src/consumer.ts"
+    environment:
+      AMQP_URL: amqp://rabbitmq:5672  
+    depends_on:
+      - rabbitmq
+    volumes:
+      - ./services/consumer:/app
+    ports:
+      - "3002:3002"
+    networks:
+      - backend-network
+
+  rabbitmq:
+    container_name: rabbitmq
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - backend-network
+
+networks:
+  backend-network:
+    driver: bridge      

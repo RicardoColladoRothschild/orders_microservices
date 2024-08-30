@@ -1,0 +1,14 @@
+{
+  "name": "amqppractice",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start:all": "sh ./scripts/start-all.sh",
+    "stop:all": "sh ./scripts/stop-all.sh",
+    "build": "sh ./scripts/build-all.sh"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
